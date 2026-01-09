@@ -63,7 +63,7 @@ def delete_folder(folder : Path):
         try:
             shutil.rmtree(folder)
         except Exception as e:
-            print("Error occured: {e}")
+            print(f"Error occured: {e}")
             raise                       
 
 def prepare_backup_staging(source_path :str,
