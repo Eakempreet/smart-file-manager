@@ -54,7 +54,7 @@ def create_staging_copy(source_f: Path, staging_root: Path) -> Path:
             ignore=shutil.ignore_patterns("desktop.ini", "Thumbs.db"),
         )
     except Exception as e:
-        print(f"Creation of statging folder failed: {e}")
+        print(f"Creation of staging folder failed: {e}")
         raise
     return staging_folder
                         
