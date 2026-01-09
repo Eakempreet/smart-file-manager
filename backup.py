@@ -101,6 +101,8 @@ def prepare_backup_staging(source_path :str,
     
     
 if __name__ == "__main__":
+    
+    # Can be blank or whatever you like 
     result = prepare_backup_staging(
         "D:/Downloads",
         "D:/Backup",
