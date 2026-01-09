@@ -13,21 +13,31 @@ def create_backup(source_f: Path, backup_root: Path) -> Path:
     if not source_f.exists() or not source_f.is_dir():
         raise ValueError("Source folder is not valid.")
 
+    backup_root.mkdir(parents=True, exist_ok=True)
+    
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     backup_folder = backup_root / f"{source_f.name}_backup_{timestamp}"
     
-    # w?
+    # checks whether that backup folder already exist or not
     counter = 1
     while backup_folder.exists():
         backup_folder = backup_root / f"{source_f.name}_backup_{timestamp}({counter})"
         counter += 1
+        
+    try:
+        shutil.copytree(
+            source_f,
+            backup_folder,
+            ignore=shutil.ignore_patterns("desktop.ini", "Thumbs.db"),
+        )
+    except Exception as e:
+        print(f"Backup failed: {e}")
+        raise
 
-    
-    shutil.copytree(source_f, backup_folder)
     return backup_folder
         
         
-def create_copy(source_f: Path, staging_root: Path) -> Path:
+def create_staging_copy(source_f: Path, staging_root: Path) -> Path:
     if not source_f.exists() or not source_f.is_dir():
         raise ValueError("Source folder is not valid.")
 
@@ -37,14 +47,28 @@ def create_copy(source_f: Path, staging_root: Path) -> Path:
     if staging_folder.exists():
         shutil.rmtree(staging_folder)
 
-    shutil.copytree(source_f, staging_folder)
+    try:
+        shutil.copytree(
+            source_f,
+            staging_folder,
+            ignore=shutil.ignore_patterns("desktop.ini", "Thumbs.db"),
+        )
+    except Exception as e:
+        print(f"Creation of statging folder failed: {e}")
+        raise
     return staging_folder
                         
-                        
+def delete_folder(folder : Path):
+    if folder.exists() and folder.is_dir():
+        try:
+            shutil.rmtree(folder)
+        except Exception as e:
+            print("Error occured: {e}")
+            raise                       
 
 def prepare_backup_staging(source_path :str,
                            backup_path : str,
-                           staging_path :str):
+                           staging_path :str) -> dict:
     source = Path(source_path)
     backup_root = Path(backup_path)
     staging_root = Path(staging_path)
@@ -64,7 +88,7 @@ def prepare_backup_staging(source_path :str,
         }
         
     backup_folder = create_backup(source, backup_root)
-    staging_folder = create_copy(source, staging_root)
+    staging_folder = create_staging_copy(source, staging_root)
     
     return {
         "status": "READY",
@@ -72,3 +96,14 @@ def prepare_backup_staging(source_path :str,
         "backup_folder": backup_folder,
         "staging_folder": staging_folder
     }
+    
+    
+    
+    
+if __name__ == "__main__":
+    result = prepare_backup_staging(
+        "D:/Downloads",
+        "D:/Backup",
+        "D:/temp/Staging"
+    )
+    print(result)
