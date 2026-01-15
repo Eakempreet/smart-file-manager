@@ -1,5 +1,7 @@
 from pathlib import Path
 import shutil
+import time
+import tempfile
 
 def clear_folder_contents(folder: Path):
     if not folder.exists() or not folder.is_dir():
@@ -21,19 +23,29 @@ def apply_to_original(original : Path, staging : Path):
     
     clear_folder_contents(original)
     
-    for item in staging.iterdir():
+    items = list(staging.iterdir())
+    for item in items:
         try:
-            shutil.move(item, original / item.name)
+            shutil.move(str(item), original / item.name)
         except Exception as e:
             print(f"Error Occurred: {e}")
             raise
             
     try:
+        del items
+        time.sleep(0.5)
         shutil.rmtree(staging)
-    except Exception as e:
-        print(f"Error occur while removing Staging folder: {e}")
-        raise
-        
+        print("✅ Staging folder deleted successfully")
+    except PermissionError:
+        try:
+            trash_folder = Path(tempfile.gettempdir()) / "SmartFileManager_Trash"
+            trash_folder.mkdir(exist_ok=True)
+            shutil.move(str(staging), trash_folder / staging.name)
+            print(f"✅ Staging folder moved to system temp (auto-cleanup in few days)")
+        except Exception as e:
+            # If even moving fails, just warn user
+            print(f"⚠️ Warning: Could not clean staging folder: {e}")
+            print(f"   You can manually delete: {staging}")    
         
         
 def rollback_from_backup(original: Path, backup: Path):
