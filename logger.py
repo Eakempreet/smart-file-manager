@@ -1,9 +1,9 @@
 from datetime import datetime
 from pathlib import Path
 
-LOG_DIR = Path("logs")
+BASE_DIR = Path(__file__).resolve().parent
+LOG_DIR = BASE_DIR / "logs"
 LOG_DIR.mkdir(exist_ok=True)
-
 LOG_FILE = LOG_DIR / "smart_file_manager.log"
 
 def _write_log(level: str, message : str):
