@@ -1,11 +1,14 @@
 from datetime import datetime
 from pathlib import Path
 
-LOG_FILE = Path("smart_file_manager.log")
+LOG_DIR = Path("logs")
+LOG_DIR.mkdir(exist_ok=True)
+
+LOG_FILE = LOG_DIR / "smart_file_manager.log"
 
 def _write_log(level: str, message : str):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    line = f"{timestamp} | {level.upper} | {message}\n"
+    line = f"{timestamp} | {level.upper()} | {message}\n"
     
     with open(LOG_FILE, mode="a", encoding="utf-8") as f:
         f.write(line)
