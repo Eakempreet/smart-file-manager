@@ -2,6 +2,7 @@ from pathlib import Path
 import shutil
 import time
 import tempfile
+from logger import log_warning
 
 def clear_folder_contents(folder: Path):
     if not folder.exists() or not folder.is_dir():
@@ -45,7 +46,8 @@ def apply_to_original(original : Path, staging : Path):
         except Exception as e:
             # If even moving fails, just warn user
             print(f"⚠️ Warning: Could not clean staging folder: {e}")
-            print(f"   You can manually delete: {staging}")    
+            print(f"   You can manually delete: {staging}")
+            log_warning(f"Could not delete or move staging folder: {staging}. Error: {e}")    
         
         
 def rollback_from_backup(original: Path, backup: Path):
