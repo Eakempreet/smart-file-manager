@@ -1,6 +1,6 @@
 from pathlib import Path
 import shutil
-
+from cancel_state import cancel_requested
 
 FILE_CATEGORIES = {
     "Images": [
@@ -60,6 +60,8 @@ def file_organizer(folder_path: str):
         raise ValueError("Provided path is not a valid folder")
 
     for f in folder.iterdir():
+        if cancel_requested:
+            return "CANCELLED"
         if not f.is_file():
             continue
         

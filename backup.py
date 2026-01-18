@@ -1,8 +1,13 @@
 from pathlib import Path
 import shutil
 from datetime import datetime
+from cancel_state import cancel_requested
 
-
+class CancellationError(Exception):
+    def __init__(self, phase: str, message:str = "Operation Cancelled"):
+        super().__init__(message)
+        self.phase = phase   # e.g., "backup" or "staging"
+        
 def count_files(source_f: Path) -> int:
     if not source_f.exists() or not source_f.is_dir():
         return 0
@@ -25,11 +30,17 @@ def create_backup(source_f: Path, backup_root: Path) -> Path:
         counter += 1
         
     try:
-        shutil.copytree(
-            source_f,
-            backup_folder,
-            ignore=shutil.ignore_patterns("desktop.ini", "Thumbs.db"),
-        )
+        for item in source_f.rglob("*"):
+            if cancel_requested:
+                raise CancellationError("Backup Cancel", "Backup cancelled by user")
+            
+            if item.name in ["desktop.ini", "Thumbs.db"]:
+                continue
+            if item.is_file():
+                relative_path = item.relative_to(source_f)
+                dest_path = backup_folder / relative_path
+                dest_path.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(item, dest_path)
     except Exception as e:
         print(f"Backup failed: {e}")
         raise
@@ -47,16 +58,26 @@ def create_staging_copy(source_f: Path, staging_root: Path) -> Path:
     if staging_folder.exists():
         shutil.rmtree(staging_folder)
 
+    staging_folder.mkdir(parents=True, exist_ok=True)
+    
     try:
-        shutil.copytree(
-            source_f,
-            staging_folder,
-            ignore=shutil.ignore_patterns("desktop.ini", "Thumbs.db"),
-        )
+        for item in source_f.rglob("*"):
+            if cancel_requested:
+                raise CancellationError("Staging Cancel","Cancellation requested during staging")
+            
+            if item.name in ["desktop.ini", "Thumbs.db"]:
+                continue
+            if item.is_file():
+                relative_path = item.relative_to(source_f)
+                dest_path = staging_folder / relative_path
+                dest_path.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(item, dest_path)
+            
     except Exception as e:
         print(f"Creation of staging folder failed: {e}")
         raise
     return staging_folder
+
                         
 def delete_folder(folder : Path):
     if folder.exists() and folder.is_dir():
@@ -65,6 +86,8 @@ def delete_folder(folder : Path):
         except Exception as e:
             print(f"Error occured: {e}")
             raise                       
+
+
 
 def prepare_backup_staging(source_path :str,
                            backup_path : str,
@@ -86,9 +109,36 @@ def prepare_backup_staging(source_path :str,
             "status" : "EMPTY",
             "source_files" : 0
         }
+    backup_folder = None
+    staging_folder = None 
+       
+    try:
+        backup_folder = create_backup(source, backup_root)
+    except CancellationError:
+        if backup_folder and backup_folder.exists():
+            delete_folder(backup_folder)
+            return{
+                "status" : "CANCELLED",
+                "source_files" : source_file_count
+                }
+    except Exception as e:
+        print(f"Error occurred while taking backup: {e}")
+        raise
         
-    backup_folder = create_backup(source, backup_root)
-    staging_folder = create_staging_copy(source, staging_root)
+    try:
+        staging_folder = create_staging_copy(source, staging_root)
+    except CancellationError:
+        if staging_folder and staging_folder.exists():
+            delete_folder(staging_folder)
+            return {
+                "status": "CANCELLED",
+                "source_files": source_file_count,
+                "backup_folder": backup_folder
+            }
+    except Exception as e:
+        print(f"Error Occurred while staging: {e}")
+        raise
+    
     
     return {
         "status": "READY",
