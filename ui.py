@@ -143,8 +143,7 @@ class SmartFileManagerUI:
             self.run_btn.config(state="normal")
             self.reset_btn.config(state="normal")
         else:
-            self.run_btn.config(state="disabled")
-            self.reset_btn.config(state="normal")    
+            self.run_btn.config(state="disabled")  
     
     def on_run(self):
         print("Run clicked")
