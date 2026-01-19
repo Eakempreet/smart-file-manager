@@ -1,6 +1,9 @@
 import tkinter as tk
 from tkinter import ttk, filedialog
 from cancel_state import request_cancel, reset_cancel
+import threading
+import time
+import queue
 
 class SmartFileManagerUI:
     def __init__(self, root):
@@ -9,6 +12,7 @@ class SmartFileManagerUI:
         self.root.geometry("800x520")
         self.root.resizable(False, False)
         self.is_dark = True
+        self.ui_queue = queue.Queue()
         
         
         # Icons
@@ -22,6 +26,7 @@ class SmartFileManagerUI:
         self.build_control()
         self.build_progress_section()
         self.build_log_section()
+        self.process_ui_queue()
     
     
     def _build_folder_section(self, label_text, browse_command):
@@ -157,6 +162,12 @@ class SmartFileManagerUI:
         self.reset_btn.config(state="disabled")
         self.status_text.set("Running...")
         
+        thread = threading.Thread(
+            target=self._background_task,
+            daemon=True
+        )
+        thread.start()
+        
     
     def on_cancel(self):
         request_cancel()
@@ -218,6 +229,34 @@ class SmartFileManagerUI:
         self.log_text.insert("end", message + "\n")
         self.log_text.see("end")
         self.log_text.config(state="disabled")
+        
+    def _background_task(self):
+        self.ui_queue.put(("log", "Backend Started"))
+        for i in range(5):
+            time.sleep(1)
+            print(i)
+            self.ui_queue.put(("log", "Working..."))
+        
+        self.ui_queue.put(("log", "Backend finished"))
+        self.ui_queue.put(("done", None))
+        
+    def process_ui_queue(self):
+        try:
+            msg_type, payload = self.ui_queue.get_nowait()
+            
+            if msg_type == "log":
+                self.log(payload)
+                
+            elif msg_type == "done":
+                self.run_btn.config(state="disabled")
+                self.cancel_btn.config(state="disabled")
+                self.reset_btn.config(state="normal")
+                self.status_text.set("Completed")
+        
+        except queue.Empty:
+            pass
+        
+        self.root.after(100, self.process_ui_queue)
     
 if __name__ == "__main__":
     root = tk.Tk()
