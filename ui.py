@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, filedialog
+from cancel_state import request_cancel, reset_cancel
 
 class SmartFileManagerUI:
     def __init__(self, root):
@@ -148,6 +149,7 @@ class SmartFileManagerUI:
             self.reset_btn.config(state="disabled")
             
     def on_run(self):
+        reset_cancel()
         print("Run clicked")
         self.log("Run Started")
         self.run_btn.config(state="disabled")
@@ -157,13 +159,14 @@ class SmartFileManagerUI:
         
     
     def on_cancel(self):
+        request_cancel()
         print("Cancel clicked")
         self.log("Operation canceled by the User")
         self.status_text.set("Cancelled")
         self.cancel_btn.config(state="disabled")
-        self.reset_btn.config(state="normal")
         
     def on_reset(self):
+        reset_cancel()
         self.log("UI reset... Select the Folders")
         self.source_path.set("")
         self.backup_path.set("")
