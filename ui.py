@@ -141,10 +141,12 @@ class SmartFileManagerUI:
         
         if src and bkp and src != bkp:
             self.run_btn.config(state="normal")
+    
+        if src or bkp:  # Enable reset if ANY path selected
             self.reset_btn.config(state="normal")
         else:
-            self.run_btn.config(state="disabled")  
-    
+            self.reset_btn.config(state="disabled")
+            
     def on_run(self):
         print("Run clicked")
         self.log("Run Started")
