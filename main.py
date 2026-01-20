@@ -21,16 +21,16 @@ def cleanup_staging_and_exit(staging_folder, reason="cancelation"):
         print(f"⚠️ Warning: Could not delete staging folder: {e}")
         log_error(f"Could not delete staging folder: {e}")
 
-def main():
+def run_backend(source_Folder, backup_Folder, staging_Folder):
     # resetting the cancel attribute
     reset_cancel()
     log_info("=" * 100)
     log_info("Program Started")
     try:
         result = prepare_backup_staging(
-            SOURCE_FOLDER,
-            BACKUP_FOLDER,
-            STAGING_FOLDER
+            source_Folder,
+            backup_Folder,
+            staging_Folder
         )
     except Exception as e:
         print(f"Setup failed: {e}")
@@ -101,6 +101,13 @@ def main():
         log_info("Rollback Completed")
 
     
+def main():
+    run_backend(
+        SOURCE_FOLDER,
+        BACKUP_FOLDER,
+        STAGING_FOLDER
+    )
+
     
 
 if __name__ == "__main__":
