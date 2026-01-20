@@ -21,11 +21,12 @@ def cleanup_staging_and_exit(staging_folder, reason="cancelation"):
         print(f"⚠️ Warning: Could not delete staging folder: {e}")
         log_error(f"Could not delete staging folder: {e}")
 
-def run_backend(source_Folder, backup_Folder, staging_Folder):
+def run_backend(source_Folder, backup_Folder):
     # resetting the cancel attribute
     reset_cancel()
     log_info("=" * 100)
     log_info("Program Started")
+    staging_Folder = Path(backup_Folder).parent / "Staging"
     try:
         result = prepare_backup_staging(
             source_Folder,
@@ -104,8 +105,7 @@ def run_backend(source_Folder, backup_Folder, staging_Folder):
 def main():
     run_backend(
         SOURCE_FOLDER,
-        BACKUP_FOLDER,
-        STAGING_FOLDER
+        BACKUP_FOLDER
     )
 
     
