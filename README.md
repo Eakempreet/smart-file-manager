@@ -173,8 +173,6 @@ Notes:
 
 ## 🙌 Acknowledgements
 
-T## 🙌 Acknowledgements
-
 AI-assisted tools (such as GitHub Copilot) were used during development to speed up iteration and reduce boilerplate.  
 All architectural decisions, safety constraints, and final implementations were designed, reviewed, and validated manually.
 
