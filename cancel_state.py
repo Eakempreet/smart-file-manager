@@ -2,9 +2,9 @@ cancel_requested = False
 
 def request_cancel():
     global cancel_requested
-    cancel_request = True
+    cancel_requested = True
 
     
 def reset_cancel():
     global cancel_requested
-    cancel_request = False
+    cancel_requested = False
