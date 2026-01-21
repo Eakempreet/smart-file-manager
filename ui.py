@@ -235,7 +235,11 @@ class SmartFileManagerUI:
             self.ui_queue.put(("log", "Backend Started"))
             self.ui_queue.put(("status", "Running"))
         
-            result = run_backend(self.source_path.get(), self.backup_path.get())
+            result = run_backend(
+                self.source_path.get(),
+                self.backup_path.get(),
+                self.report_progress
+                )
         
             if result == "SUCCESS":
                 self.ui_queue.put(("done", "Completed successfully"))
@@ -284,13 +288,25 @@ class SmartFileManagerUI:
                     self.status_text.set("Failed")
                     self.run_btn.config(state="disabled")
                     self.cancel_btn.config(state="disabled")
-                    self.reset_btn.config(state="normal")                  
+                    self.reset_btn.config(state="normal")
+                    
+                elif msg_type == "progress":
+                    current, total, phase = payload
+                    percent = (int(current)/ int(total)) * 100
+                    if self.progress_bar["maximum"] != total:
+                        self.progress_bar["maximum"] = total
+                    self.progress_bar["value"] = current
+                    self.status_text.set(f"{phase}: {percent:.1f}% ({current}/{total})")
+                                      
                 
-        
         except queue.Empty:
             pass
         
         self.root.after(100, self.process_ui_queue)
+        
+    def report_progress(self, current, total, phase):
+        self.ui_queue.put(("progress", (current, total, phase)))    
+        
     
 if __name__ == "__main__":
     root = tk.Tk()
