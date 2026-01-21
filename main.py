@@ -2,27 +2,42 @@ from pathlib import Path
 from backup import prepare_backup_staging, count_files
 from organizer import file_organizer
 from apply import apply_to_original, rollback_from_backup, clear_folder_contents
-from logger import log_info, log_error
+from logger import log_info, log_error, log_warning
 import cancel_state
 from cancel_state import reset_cancel
+import shutil
 
 SOURCE_FOLDER = "D:/Downloads"
 BACKUP_FOLDER = "D:/SFM/Backup_SFM"
 
 def cleanup_staging_and_exit(staging_folder, reason="cancelation"):
     """Clean up staging folder after cancellation"""
+    sf = Path(staging_folder)
     # If staging was already deleted (e.g., apply_to_original removed it), skip quietly.
-    if not Path(staging_folder).exists():
+    if not sf.exists():
         log_info(f"Staging folder already removed; no cleanup needed after {reason}")
         return
+    
+    print(f"🗑️ Attempting to delete staging folder: {sf}")
     try:
-        clear_folder_contents(staging_folder)
-        staging_folder.rmdir()
-        print("✅ Staging folder cleaned up.")
-        log_info(f"Staging folder deleted after {reason}")
+        # Use rmtree directly to remove folder and all contents
+        shutil.rmtree(sf)
+        
+        # Verify deletion
+        if not sf.exists():
+            print(f"✅ Staging folder cleaned up: {sf}")
+            log_info(f"Staging folder deleted after {reason}: {sf}")
+        else:
+            print(f"⚠️ Folder still exists after cleanup attempt: {sf}")
+            log_warning(f"Staging folder still exists after rmtree: {sf}")
+    except PermissionError as e:
+        print(f"⚠️ Permission denied (folder may be locked by Windows): {sf}")
+        print(f"   You can manually delete: {sf}")
+        log_warning(f"PermissionError deleting staging folder: {sf} :: {e}")
     except Exception as e:
-        print(f"⚠️ Warning: Could not delete staging folder: {e}")
-        log_error(f"Could not delete staging folder: {e}")
+        print(f"⚠️ Could not delete staging folder: {e}")
+        print(f"   Path: {sf}")
+        log_warning(f"Could not delete staging folder: {sf} :: {e}")
 
 def run_backend(source_Folder, backup_Folder):
     # resetting the cancel attribute
@@ -49,6 +64,9 @@ def run_backend(source_Folder, backup_Folder):
     if result["status"] == "CANCELLED":
         print("Operation cancelled during backup/staging.")
         log_info("Cancelled during backup/staging phase")
+        # Clean up any partial staging that might exist
+        if staging_path.exists():
+            cleanup_staging_and_exit(staging_path, "cancelation during backup/staging")
         return "CANCELLED"
     
     if result["status"] == "EMPTY":
@@ -115,9 +133,7 @@ def main():
     run_backend(
         SOURCE_FOLDER,
         BACKUP_FOLDER
-    )
-
-    
+    )   
 
 if __name__ == "__main__":
     main()
