@@ -11,6 +11,10 @@ BACKUP_FOLDER = "D:/SFM/Backup_SFM"
 
 def cleanup_staging_and_exit(staging_folder, reason="cancelation"):
     """Clean up staging folder after cancellation"""
+    # If staging was already deleted (e.g., apply_to_original removed it), skip quietly.
+    if not Path(staging_folder).exists():
+        log_info(f"Staging folder already removed; no cleanup needed after {reason}")
+        return
     try:
         clear_folder_contents(staging_folder)
         staging_folder.rmdir()
