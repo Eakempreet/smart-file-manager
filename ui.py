@@ -4,6 +4,8 @@ from cancel_state import request_cancel, reset_cancel
 import threading
 import queue
 from main import run_backend
+import sys
+from pathlib import Path
 
 class SmartFileManagerUI:
     def __init__(self, root):
@@ -15,10 +17,10 @@ class SmartFileManagerUI:
         self.ui_queue = queue.Queue()
         
         
-        # Icons
-        self.moon_icon = tk.PhotoImage(file="assets_ui/half-moon.png")
-        self.sun_icon = tk.PhotoImage(file="assets_ui/sun.png")
-        self.folder_icon = tk.PhotoImage(file="assets_ui/folder.png")
+        # Icons (load safely for both normal runs and packaged .exe)
+        self.moon_icon = self._load_icon("assets_ui/half-moon.png")
+        self.sun_icon = self._load_icon("assets_ui/sun.png")
+        self.folder_icon = self._load_icon("assets_ui/folder.png")
         
         self.setup_style()
         self.build_header()
@@ -45,7 +47,10 @@ class SmartFileManagerUI:
         entry = ttk.Entry(frame, textvariable=path_var, state="readonly", style="Dark.TEntry")
         entry.grid(row=1, column=0, sticky="ew", pady=5)
         
-        button = ttk.Button(frame, image=self.folder_icon, command=browse_command, style="Dark.TButton")
+        if self.folder_icon is not None:
+            button = ttk.Button(frame, image=self.folder_icon, command=browse_command, style="Dark.TButton")
+        else:
+            button = ttk.Button(frame, text="Browse", command=browse_command, style="Dark.TButton")
         button.grid(row=1, column=1, padx=5, pady=5)
         
         # Returning widgets explicitly to allow future customization
@@ -73,13 +78,34 @@ class SmartFileManagerUI:
         )
         subtitle.grid(row=1, column=0, sticky="w")
         
-        self.theme_btn = ttk.Button(
-            header,
-            image=self.moon_icon,
-            command=self.toggle_theme,
-            style="Dark.TButton"
-        )
+        if self.moon_icon is not None:
+            self.theme_btn = ttk.Button(
+                header,
+                image=self.moon_icon,
+                command=self.toggle_theme,
+                style="Dark.TButton"
+            )
+        else:
+            self.theme_btn = ttk.Button(
+                header,
+                text="Theme",
+                command=self.toggle_theme,
+                style="Dark.TButton"
+            )
         self.theme_btn.grid(row=0, column=1, rowspan=2, sticky="e")
+
+    def _resource_path(self, relative_path: str) -> Path:
+        base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+        return base / relative_path
+
+    def _load_icon(self, relative_path: str):
+        path = self._resource_path(relative_path)
+        try:
+            if path.exists():
+                return tk.PhotoImage(file=str(path))
+        except tk.TclError:
+            pass
+        return None
         
     
     def toggle_theme(self):
