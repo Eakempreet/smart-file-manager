@@ -7,8 +7,8 @@ import cancel_state
 from cancel_state import reset_cancel
 import shutil
 
-SOURCE_FOLDER = "D:/Downloads"
-BACKUP_FOLDER = "D:/SFM/Backup_SFM"
+SOURCE_FOLDER = None
+BACKUP_FOLDER = None
 
 def cleanup_staging_and_exit(staging_folder, reason="cancelation"):
     """Clean up staging folder after cancellation"""
