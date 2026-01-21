@@ -37,6 +37,14 @@ def apply_to_original(original : Path, staging : Path):
         time.sleep(0.5)
         shutil.rmtree(staging)
         print("✅ Staging folder deleted successfully")
+        # Also delete parent Staging folder if it's empty
+        parent_staging = staging.parent
+        try:
+            if parent_staging.exists() and not any(parent_staging.iterdir()):
+                parent_staging.rmdir()
+                print(f"✅ Parent Staging folder also deleted")
+        except Exception:
+            pass  # Parent still has content or cannot be deleted, that's okay
     except PermissionError:
         try:
             trash_folder = Path(tempfile.gettempdir()) / "SmartFileManager_Trash"
