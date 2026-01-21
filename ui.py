@@ -2,8 +2,8 @@ import tkinter as tk
 from tkinter import ttk, filedialog
 from cancel_state import request_cancel, reset_cancel
 import threading
-import time
 import queue
+from main import run_backend
 
 class SmartFileManagerUI:
     def __init__(self, root):
@@ -96,7 +96,7 @@ class SmartFileManagerUI:
         if path:
             self.source_path.set(path)
             self.log(f"Source folder selected: {path}")
-            self.validation_ready()
+            self.update_controls_state()
             
             
     def build_backup_section(self):
@@ -111,7 +111,7 @@ class SmartFileManagerUI:
         if path:
             self.backup_path.set(path)
             self.log(f"Backup folder selected: {path}")
-            self.validation_ready()
+            self.update_controls_state()
         
     def build_control(self):
         control_frame = ttk.Frame(self.root, padding=(20, 20))
@@ -141,7 +141,7 @@ class SmartFileManagerUI:
         )
         self.reset_btn.pack(side="left", padx=10)
     
-    def validation_ready(self):
+    def update_controls_state(self):
         src = self.source_path.get()
         bkp = self.backup_path.get()
         
@@ -172,9 +172,9 @@ class SmartFileManagerUI:
     def on_cancel(self):
         request_cancel()
         print("Cancel clicked")
-        self.log("Operation canceled by the User")
-        self.status_text.set("Cancelled")
+        self.log("Cancel requested by the")
         self.cancel_btn.config(state="disabled")
+        self.status_text.set("Cancelling...")
         
     def on_reset(self):
         reset_cancel()
@@ -231,27 +231,61 @@ class SmartFileManagerUI:
         self.log_text.config(state="disabled")
         
     def _background_task(self):
-        self.ui_queue.put(("log", "Backend Started"))
-        for i in range(5):
-            time.sleep(1)
-            print(i)
-            self.ui_queue.put(("log", "Working..."))
+        try:
+            self.ui_queue.put(("log", "Backend Started"))
+            self.ui_queue.put(("status", "Running"))
         
-        self.ui_queue.put(("log", "Backend finished"))
-        self.ui_queue.put(("done", None))
+            result = run_backend(self.source_path.get(), self.backup_path.get())
+        
+            if result == "SUCCESS":
+                self.ui_queue.put(("done", "Completed successfully"))
+            elif result == "CANCELLED":
+                self.ui_queue.put(("cancelled", "Operation cancelled by User"))
+            elif result == "EMPTY":
+                self.ui_queue.put(("done", "Nothing to organize (Empty Folder)"))
+            elif result == "SETUP_FAILED":
+                self.ui_queue.put(("failed", "Cannot stage the folders"))
+            elif result == "FAILED":
+                self.ui_queue.put(("failed", "Apply failed on source folder"))
+            else:
+                self.ui_queue.put(("done", "Completed"))
+        
+        except Exception as e:
+            self.ui_queue.put(("error", str(e)))
         
     def process_ui_queue(self):
         try:
-            msg_type, payload = self.ui_queue.get_nowait()
+            while True:
+                msg_type, payload = self.ui_queue.get_nowait()
             
-            if msg_type == "log":
-                self.log(payload)
+                if msg_type == "log":
+                    self.log(payload)
+                    
+                elif msg_type == "status":
+                    self.status_text.set(payload)
                 
-            elif msg_type == "done":
-                self.run_btn.config(state="disabled")
-                self.cancel_btn.config(state="disabled")
-                self.reset_btn.config(state="normal")
-                self.status_text.set("Completed")
+                elif msg_type == "done":
+                    self.log(payload)
+                    self.status_text.set("Completed")
+                    self.run_btn.config(state="disabled")
+                    self.cancel_btn.config(state="disabled")
+                    self.reset_btn.config(state="normal")
+                    
+                    
+                elif msg_type == "cancelled":
+                    self.log(payload)
+                    self.status_text.set("Cancelled")
+                    self.run_btn.config(state="disabled")
+                    self.cancel_btn.config(state="disabled")
+                    self.reset_btn.config(state="normal")
+                    
+                elif msg_type == "failed" or msg_type == "error":
+                    self.log(payload)
+                    self.status_text.set("Failed")
+                    self.run_btn.config(state="disabled")
+                    self.cancel_btn.config(state="disabled")
+                    self.reset_btn.config(state="normal")                  
+                
         
         except queue.Empty:
             pass
