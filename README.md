@@ -1,6 +1,6 @@
 # Smart File Manager
 
-A **safe and reliable Python desktop application** for organizing files with backup, staging, rollback, cooperative cancel, and live progress — all in a responsive Tkinter UI.
+A **safe and reliable Python desktop application** for organizing files with backup, staging, rollback, cooperative cancel, and live progress all in a responsive Tkinter UI.
 
 ---
 
@@ -19,7 +19,7 @@ It prevents data loss, supports cancellation at safe checkpoints, and performs r
 
 ## 💡 Motivation
 
-Many folders—especially downloads—tend to become cluttered over time, making it difficult to locate files or maintain structure.
+Many folders—especially downloads tend to become cluttered over time, making it difficult to locate files or maintain structure.
 
 This project was created to solve that exact problem:  
 to safely organize messy folders **without risking data loss**, while still giving users control and transparency over the process.
