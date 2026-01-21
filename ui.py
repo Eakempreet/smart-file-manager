@@ -172,7 +172,7 @@ class SmartFileManagerUI:
     def on_cancel(self):
         request_cancel()
         print("Cancel clicked")
-        self.log("Cancel requested by the")
+        self.log("Cancel requested by the User")
         self.cancel_btn.config(state="disabled")
         self.status_text.set("Cancelling...")
         
@@ -292,12 +292,24 @@ class SmartFileManagerUI:
                     
                 elif msg_type == "progress":
                     current, total, phase = payload
-                    percent = (int(current)/ int(total)) * 100
-                    if self.progress_bar["maximum"] != total:
+                    current = int(current)
+                    total = int(total)
+                    
+                    if total == 0:
+                        self.status_text.set(f"{phase}...")
+                        continue
+                    
+                    percent = (current/ total) * 100
+                    if int(self.progress_bar["maximum"]) != total:
                         self.progress_bar["maximum"] = total
                     self.progress_bar["value"] = current
                     self.status_text.set(f"{phase}: {percent:.1f}% ({current}/{total})")
-                                      
+                    
+                elif msg_type == "apply_start":
+                    self.cancel_btn.config(state="disabled")
+                    self.reset_btn.config(state="disabled")
+                    self.run_btn.config(state="disabled")
+                    self.status_text.set("Applying changes (do not close the window...)")                      
                 
         except queue.Empty:
             pass
@@ -305,7 +317,10 @@ class SmartFileManagerUI:
         self.root.after(100, self.process_ui_queue)
         
     def report_progress(self, current, total, phase):
-        self.ui_queue.put(("progress", (current, total, phase)))    
+        if phase == "APPLY_START":
+            self.ui_queue.put(("apply_start", None))
+        else:
+            self.ui_queue.put(("progress", (current, total, phase)))    
         
     
 if __name__ == "__main__":

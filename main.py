@@ -115,11 +115,16 @@ def run_backend(source_Folder, backup_Folder, progress_cb = None):
          
         print("Applying organized folder to original folder...")
         log_info("Applying staging to original")
+        
+        if progress_cb:
+            progress_cb(0, 0, "APPLY_START")
+            
         apply_to_original(source_path, staging_folder)
         print("✅ Files applied successfully.")
         log_info("Files applied succesfully to the original")
         cleanup_staging_and_exit(staging_folder, "success")
         return "SUCCESS"
+    
     except Exception as e:
         print(f"❌ Apply failed: {e}")
         print("↩️ Rolling back from backup...")
