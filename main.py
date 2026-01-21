@@ -39,7 +39,7 @@ def cleanup_staging_and_exit(staging_folder, reason="cancelation"):
         print(f"   Path: {sf}")
         log_warning(f"Could not delete staging folder: {sf} :: {e}")
 
-def run_backend(source_Folder, backup_Folder):
+def run_backend(source_Folder, backup_Folder, progress_cb = None):
     # resetting the cancel attribute
     reset_cancel()
     log_info("=" * 100)
@@ -54,7 +54,8 @@ def run_backend(source_Folder, backup_Folder):
         result = prepare_backup_staging(
             str(source_path),
             str(backup_path),
-            str(staging_path)
+            str(staging_path),
+            progress_cb=progress_cb
         )
     except Exception as e:
         print(f"Setup failed: {e}")
