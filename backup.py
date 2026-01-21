@@ -14,7 +14,13 @@ def count_files(source_f: Path) -> int:
     return sum(1 for item in source_f.rglob("*") if item.is_file())
 
 
-def create_backup(source_f: Path, backup_root: Path) -> Path:
+def create_backup(
+    source_f: Path,
+    backup_root: Path,
+    total_files: int,
+    progress_cb = None
+    ) -> Path:
+    
     if not source_f.exists() or not source_f.is_dir():
         raise ValueError("Source folder is not valid.")
 
@@ -29,6 +35,8 @@ def create_backup(source_f: Path, backup_root: Path) -> Path:
         backup_folder = backup_root / f"{source_f.name}_backup_{timestamp}({counter})"
         counter += 1
         
+    processed = 0
+        
     try:
         for item in source_f.rglob("*"):
             if cancel_requested:
@@ -41,6 +49,11 @@ def create_backup(source_f: Path, backup_root: Path) -> Path:
                 dest_path = backup_folder / relative_path
                 dest_path.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(item, dest_path)
+                
+                processed += 1
+                if progress_cb:
+                    progress_cb(processed, total_files, "Backup")
+                    
     except Exception as e:
         print(f"Backup failed: {e}")
         raise
@@ -48,7 +61,11 @@ def create_backup(source_f: Path, backup_root: Path) -> Path:
     return backup_folder
         
         
-def create_staging_copy(source_f: Path, staging_root: Path) -> Path:
+def create_staging_copy(source_f: Path,
+                        staging_root: Path,
+                        total_files: int,
+                        progress_cb =None ) -> Path:
+    
     if not source_f.exists() or not source_f.is_dir():
         raise ValueError("Source folder is not valid.")
 
@@ -59,6 +76,8 @@ def create_staging_copy(source_f: Path, staging_root: Path) -> Path:
         shutil.rmtree(staging_folder)
 
     staging_folder.mkdir(parents=True, exist_ok=True)
+    
+    processed = 0
     
     try:
         for item in source_f.rglob("*"):
@@ -72,6 +91,10 @@ def create_staging_copy(source_f: Path, staging_root: Path) -> Path:
                 dest_path = staging_folder / relative_path
                 dest_path.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(item, dest_path)
+                
+                processed += 1
+                if progress_cb:
+                    progress_cb(processed, total_files, "Staging")
             
     except Exception as e:
         print(f"Creation of staging folder failed: {e}")
@@ -91,7 +114,9 @@ def delete_folder(folder : Path):
 
 def prepare_backup_staging(source_path :str,
                            backup_path : str,
-                           staging_path :str) -> dict:
+                           staging_path :str,
+                           progress_cb = None) -> dict:
+    
     source = Path(source_path)
     backup_root = Path(backup_path)
     staging_root = Path(staging_path)
@@ -113,7 +138,10 @@ def prepare_backup_staging(source_path :str,
     staging_folder = None 
        
     try:
-        backup_folder = create_backup(source, backup_root)
+        backup_folder = create_backup(source,
+                                      backup_root,
+                                      source_file_count,
+                                      progress_cb=progress_cb)
     except CancellationError:
         if backup_folder and backup_folder.exists():
             delete_folder(backup_folder)
@@ -126,7 +154,10 @@ def prepare_backup_staging(source_path :str,
         raise
         
     try:
-        staging_folder = create_staging_copy(source, staging_root)
+        staging_folder = create_staging_copy(source,
+                                             staging_root,
+                                             source_file_count,
+                                             progress_cb=progress_cb)
     except CancellationError:
         if staging_folder and staging_folder.exists():
             delete_folder(staging_folder)
