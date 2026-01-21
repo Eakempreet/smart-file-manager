@@ -17,6 +17,15 @@ It prevents data loss, supports cancellation at safe checkpoints, and performs r
 
 ---
 
+## 💡 Motivation
+
+Many folders—especially downloads—tend to become cluttered over time, making it difficult to locate files or maintain structure.
+
+This project was created to solve that exact problem:  
+to safely organize messy folders **without risking data loss**, while still giving users control and transparency over the process.
+
+---
+
 ## 🎯 Key Features
 
 ✔ Automatic backup before any changes  
@@ -164,6 +173,9 @@ Notes:
 
 ## 🙌 Acknowledgements
 
-Thanks to Copilot and the open-source community for snippets and inspiration.
+T## 🙌 Acknowledgements
+
+AI-assisted tools (such as GitHub Copilot) were used during development to speed up iteration and reduce boilerplate.  
+All architectural decisions, safety constraints, and final implementations were designed, reviewed, and validated manually.
 
 ---
